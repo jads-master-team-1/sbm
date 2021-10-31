@@ -138,7 +138,8 @@
       "RemoteRepo": "bootcamp_2021",
       "RemoteRef": "master",
       "RemoteSha": "e13950ab3cec3a3241a9528249cf6d59aeb6f7e5",
-      "Hash": "b50e7a81f99db96aef00580a9aa846e6"
+      "Remotes": "github::rstudio-education/gradethis,",
+      "Hash": "11d59f34595438c9572df4e4b8fda672"
     },
     "brio": {
       "Package": "brio",
