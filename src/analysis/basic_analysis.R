@@ -31,10 +31,15 @@ numeric_columns <- c("Age",
                      "Valuation.at.IPO.Currency..in.USD.",
                      "CB.Rank..Organization.",
                      "CB.Rank..Company.",
-                     "CB.Rank..School.")
+                     "CB.Rank..School.",
+                     "Trend.Score..7.Days.",
+                     "Trend.Score..30.Days.",
+                     "Trend.Score..90.Days.")
 factor_columns <- c("Company.Type",
                     "Operating.Status",
                     "Founded.Date.Precision",
+                    "Estimated.Revenue.Range",
+                    "Number.of.Employees",
                     "Acquisition.Status",
                     "Acquisition.Type",
                     "Acquisition.Terms",
@@ -50,6 +55,7 @@ factor_columns <- c("Company.Type",
                     "Valuation.at.IPO.Currency")
 date_columns <- c("Founded.Date", "Last.Funding.Date", "IPO.Date")
 list_columns <- c("Industries",
+                  "Industry.Groups",
                   "Top.5.Investors",
                   "Investor.Type",
                   "Investment.Stage")
@@ -81,23 +87,53 @@ fintech[date_columns] <- sapply(fintech[date_columns], as.character)
 ### Set list types
 fintech[character_columns] <- sapply(fintech[character_columns], as.character)
 
-## First row
+### Split industry groups
+#### TODO(tomdewildt): split industry groups into separate columns
+
+## Create Subset
+
+### Create small subset
+fintech_small <- fintech[c("Age",
+                           "Company.Type",
+                           "Industry.Groups",
+                           "Number.of.Employees",
+                           "CB.Rank..Company.",
+                           "CB.Rank..Organization.",
+                           "Estimated.Revenue.Range",
+                           "Number.of.Investors",
+                           "Number.of.Lead.Investors",
+                           "Number.of.Funding.Rounds",
+                           "Total.Funding.Amount.Currency..in.USD.",
+                           "Total.Equity.Funding.Amount.Currency..in.USD.",
+                           "Trend.Score..7.Days.",
+                           "Trend.Score..30.Days.",
+                           "Trend.Score..90.Days.")]
+
+## First row (large)
 head(fintech)
 
-## Summary statistics
+## First row (small)
+head(fintech_small)
+
+## Summary statistics (large)
 summary(fintech)
 
-bootcamp2021::descriptives(fintech[numeric_columns], digits = 2)
+bootcamp2021::descriptives(fintech, digits = 2)
 
-## Remove NA's
+## Summary statistics (small)
+summary(fintech_small)
 
-### TODO: remove NA's
+bootcamp2021::descriptives(fintech_small, digits = 2)
 
 ## Plots
 
-### Missing data
+### Missing data (large)
 naniar::vis_miss(fintech)
 naniar::gg_miss_upset(fintech)
+
+### Missing data (small)
+naniar::vis_miss(fintech_small)
+naniar::gg_miss_upset(fintech_small)
 
 ### Company age: histogram / density plot
 hist(fintech$Age,
@@ -151,15 +187,65 @@ ggplot2::ggplot(fintech) +
   ggplot2::geom_boxplot(fill = "#0c4c8a") +
   ggplot2::theme_minimal()
 
-### Fintech: correlation network
-fintech_small <- fintech[c("CB.Rank..Organization.",
-                           "Number.of.Investors",
-                           "Number.of.Lead.Investors",
-                           "Total.Funding.Amount.Currency..in.USD.",
-                           "Total.Equity.Funding.Amount.Currency..in.USD.")]
-fintech_small <- na.omit(fintech_small)
+### Company type: barplot
+counts <- table(fintech$Company.Type)
 
-bootcamp2021::corrNetwork(fintech_small)
+barplot(counts,
+        main = "Company Type Distribution",
+        xlab = "Company Types",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+
+### Number of employees: barplot
+counts <- table(fintech$Number.of.Employees)
+
+barplot(counts,
+        main = "Number of Employees",
+        xlab = "Count",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+### Estimated Revenue Range: barplot
+counts <- table(fintech$Estimated.Revenue.Range)
+
+barplot(counts,
+        main = "Estimated Revenue Range Distribution",
+        xlab = "Estimated Revenue Range",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+### Number of investors: barplot
+counts <- table(fintech$Number.of.Investors)
+
+barplot(counts,
+        main = "Number of Investors",
+        xlab = "Count",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+### Number of lead investors: barplot
+counts <- table(fintech$Number.of.Lead.Investors)
+
+barplot(counts,
+        main = "Number of Lead Investors",
+        xlab = "Count",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+### Number of funding rounds: barplot
+counts <- table(fintech$Number.of.Funding.Rounds)
+
+barplot(counts,
+        main = "Number of Funding Rounds",
+        xlab = "Count",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+### Fintech: correlation network
+bootcamp2021::corrNetwork(na.omit(fintech_small[intersect(names(fintech_small),
+                                                          numeric_columns)]),
+                          main = "Correlation network of fintech (small)")
 
 ## Tests
 
