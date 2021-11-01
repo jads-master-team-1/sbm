@@ -87,8 +87,13 @@ fintech[date_columns] <- sapply(fintech[date_columns], as.character)
 ### Set list types
 fintech[character_columns] <- sapply(fintech[character_columns], as.character)
 
-### Split industry groups
-#### TODO(tomdewildt): split industry groups into separate columns
+## Clean data
+
+### Set is number.of.employees 10-Jan to 1-10
+fintech$Number.of.Employees[fintech$Number.of.Employees == ""] <- "1-10"
+
+### Set is number.of.employees Nov-50 to 11-50
+fintech$Number.of.Employees[fintech$Number.of.Employees == ""] <- "11-50"
 
 ## Create Subset
 
@@ -100,6 +105,7 @@ fintech_small <- fintech[c("Age",
                            "CB.Rank..Company.",
                            "CB.Rank..Organization.",
                            "Estimated.Revenue.Range",
+                           "Last.Funding.Type",
                            "Number.of.Investors",
                            "Number.of.Lead.Investors",
                            "Number.of.Funding.Rounds",
