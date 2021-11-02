@@ -4,7 +4,7 @@
 fintech <- read.csv("./data/fintech.csv",
                     header = TRUE,
                     sep = ",",
-                    na.strings = "")
+                    na.strings = c("", "#VALUE!"))
 
 ## Select Columns
 character_columns <- c("Organization.Name", "Acquired.by")
@@ -90,10 +90,10 @@ fintech[character_columns] <- sapply(fintech[character_columns], as.character)
 ## Clean data
 
 ### Set is number.of.employees 10-Jan to 1-10
-fintech$Number.of.Employees[fintech$Number.of.Employees == ""] <- "1-10"
+fintech$Number.of.Employees[fintech$Number.of.Employees == "10-Jan"] <- "1-10"
 
 ### Set is number.of.employees Nov-50 to 11-50
-fintech$Number.of.Employees[fintech$Number.of.Employees == ""] <- "11-50"
+fintech$Number.of.Employees[fintech$Number.of.Employees == "Nov-50"] <- "11-50"
 
 ## Create Subset
 
@@ -103,7 +103,6 @@ fintech_small <- fintech[c("Age",
                            "Industry.Groups",
                            "Number.of.Employees",
                            "CB.Rank..Company.",
-                           "CB.Rank..Organization.",
                            "Estimated.Revenue.Range",
                            "Last.Funding.Type",
                            "Number.of.Investors",
