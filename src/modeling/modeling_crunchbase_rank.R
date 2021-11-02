@@ -94,9 +94,17 @@ m1 <- lm(CB.Rank..Company. ~ Age + Company.Type + Number.of.Employees +
 #### Check summary
 summary(m1)
 
-#### Check normality
+#### Check assumption normality
 qqnorm(m1$residuals, pch = 1, frame = FALSE)
 qqline(m1$residuals, col = "steelblue", lwd = 2)
+
+#### Check several assumptions: linearity, normality, homoscedasticity, influential cases (clockwise) 
+par(mfrow = c(2, 2))
+plot(m1)
+title("Control Variable Model", side = 3, line = -2, outer = TRUE)
+
+lmtest::bptest(m1)  # Breusch-Pagan test for homogeneity: p-value below 0.05 means heteroscedasticity!
+car::ncvTest(m1) # NCV test for homogeneity: p-value below 0.05 means heteroscedasticity!
 
 ### Create H1 model (number of investors)
 m2 <- lm(CB.Rank..Company. ~ Age + Company.Type + Number.of.Employees +
@@ -123,6 +131,14 @@ summary(m2)
 qqnorm(m2$residuals, pch = 1, frame = FALSE)
 qqline(m2$residuals, col = "steelblue", lwd = 2)
 
+#### Check several assumptions: linearity, normality, homoscedasticity, influential cases (clockwise) 
+par(mfrow = c(2, 2))
+plot(m2)
+title("H1 Model (number of investors)", side = 3, line = -2, outer = TRUE)
+
+lmtest::bptest(m2)  # Breusch-Pagan test for homogeneity: p-value below 0.05 means heteroscedasticity!
+car::ncvTest(m2) # NCV test for homogeneity: p-value below 0.05 means heteroscedasticity!
+
 ### Create H2 model (total funding amount)
 m3 <- lm(CB.Rank..Company. ~ Age + Company.Type + Number.of.Employees +
            Payments + Software + Commerce.and.Shopping +
@@ -148,3 +164,11 @@ summary(m3)
 #### Check normality
 qqnorm(m3$residuals, pch = 1, frame = FALSE)
 qqline(m3$residuals, col = "steelblue", lwd = 2)
+
+#### Check several assumptions: linearity, normality, homoscedasticity, influential cases (clockwise) 
+par(mfrow = c(2, 2))
+plot(m3)
+title("H2 model (total funding amount)", side = 3, line = -2, outer = TRUE)
+
+lmtest::bptest(m3)  # Breusch-Pagan test for homogeneity: p-value below 0.05 means heteroscedasticity!
+car::ncvTest(m3) # NCV test for homogeneity: p-value below 0.05 means heteroscedasticity!
