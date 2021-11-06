@@ -36,6 +36,9 @@ fintech$Number.of.Employees[fintech$Number.of.Employees == "10-Jan"] <- "1-10"
 ### Set is number.of.employees Nov-50 to 11-50
 fintech$Number.of.Employees[fintech$Number.of.Employees == "Nov-50"] <- "11-50"
 
+### Delete companies older than 21 years
+fintech <- fintech[fintech$Age <21, ]
+
 ### Remove NA rows
 fintech <- na.omit(fintech)
 

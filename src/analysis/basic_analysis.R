@@ -95,6 +95,9 @@ fintech$Number.of.Employees[fintech$Number.of.Employees == "10-Jan"] <- "1-10"
 ### Set is number.of.employees Nov-50 to 11-50
 fintech$Number.of.Employees[fintech$Number.of.Employees == "Nov-50"] <- "11-50"
 
+### Delete companies older than 21 years
+fintech <- fintech[fintech$Age <21, ]
+
 ## Create Subset
 
 ### Create small subset
@@ -203,18 +206,20 @@ barplot(counts,
 
 
 ### Number of employees: barplot
-counts <- table(fintech$Number.of.Employees)
+counts_emp <- table(fintech$Number.of.Employees)
+counts_emp_sorted <- counts_emp[c("1-10", "11-50", "51-100", "101-250", "251-500", "501-1000", "1001-5000", "5001-10000", "10001+")] 
 
-barplot(counts,
+barplot(counts_emp_sorted,
         main = "Number of Employees",
-        xlab = "Count",
+        xlab = "Employee range",
         ylab = "Frequency",
         col = "peachpuff")
 
 ### Estimated Revenue Range: barplot
-counts <- table(fintech$Estimated.Revenue.Range)
+counts_rev <- table(fintech$Estimated.Revenue.Range)
+counts_rev_sorted <- counts_rev[c(8,5,3,7,1,6,4,2)]
 
-barplot(counts,
+barplot(counts_rev_sorted,
         main = "Estimated Revenue Range Distribution",
         xlab = "Estimated Revenue Range",
         ylab = "Frequency",
