@@ -217,3 +217,8 @@ lmtest::bptest(m4)
 
 ##### NCV test for homogeneity: p < 0.05 = heteroscedasticity
 car::ncvTest(m4)
+
+
+library(MASS)
+m <- polr(Estimated.Revenue.Range ~ Number.of.Investors + Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
+m
