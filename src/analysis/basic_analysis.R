@@ -1,7 +1,7 @@
 # Basic Data Analysis
 
 ## Load data
-fintech <- read.csv("./data/fintech.csv",
+fintech <- read.csv("./data/fintech_companies.csv",
                     header = TRUE,
                     sep = ",",
                     na.strings = c("", "#VALUE!"))
@@ -261,3 +261,10 @@ bootcamp2021::corrNetwork(na.omit(fintech_small[intersect(names(fintech_small),
 
 ### Total funding amount: Grubbs outliers test
 outliers::grubbs.test(fintech$Total.Funding.Amount.Currency..in.USD.)
+
+
+####################################### modeling
+library(MASS)
+m <- polr(Estimated.Revenue.Range ~ Number.of.Investors + Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
+fintech_small$Total.Funding.Amount.Currency..in.USD.
+
