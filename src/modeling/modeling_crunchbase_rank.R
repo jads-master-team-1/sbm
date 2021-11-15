@@ -1,7 +1,7 @@
 # Modeling Crunchbase Rank
 
 ## Load data
-fintech <- read.csv("./data/fintech.csv",
+fintech <- read.csv("./data/fintech_companies.csv",
                     header = TRUE,
                     sep = ",",
                     na.strings = c("", "#VALUE!"))
