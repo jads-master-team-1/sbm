@@ -1,7 +1,7 @@
 # Modeling Crunchbase Rank
 
 ## Load data
-fintech <- read.csv("./data/fintech_companies.csv",
+fintech <- read.csv("./data/fintech.csv",
                     header = TRUE,
                     sep = ",",
                     na.strings = c("", "#VALUE!"))
@@ -222,3 +222,19 @@ car::ncvTest(m4)
 library(MASS)
 m <- polr(Estimated.Revenue.Range ~ Number.of.Investors + Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
 m
+
+# ordinal regression is chosen because there is an association between the levels
+H1 = polr(Estimated.Revenue.Range ~ Number.of.Investors, data = fintech, Hess = TRUE)
+summary(H1)
+
+H2 = polr(Estimated.Revenue.Range ~ Total.Funding.Amount.Currency..in.USD., data = fintech, Hess = TRUE)
+summary(H2)
+
+# not sure how to do H3
+
+
+
+
+
+
+

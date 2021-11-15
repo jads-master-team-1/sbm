@@ -89,11 +89,20 @@ unique(unlist(str_split(fintech$Industry.Groups,',')))
 unique(unlist(str_split(fintech$Industry.Groups,',\\s')))
 
 # creation of new columns
-# fintech$Finance-sales-marketing-communication
-# fintech$Software-videos-gaming-data_science
-# fintech$Art-tourism-events-lifestyle-services
-# fintech$Hardware-manufacturing-clothes-food_beverages
-# fintech$State_departments-main_industries-national_state_sectors
+# Finance-sales-marketing-communication
+# fintech$Finance
+# 
+# Software-videos-gaming-data_science
+# fintech$Software
+# 
+# Art-tourism-events-lifestyle-services
+# fintech$Art
+# 
+# Hardware-manufacturing-clothes-food_beverages
+# fintech$Hardware
+# 
+# State_departments-main_industries-national_state_sectors
+# fintech$State
 
 # Finance-sales-marketing-communication = 1
 dic1=c(
@@ -157,46 +166,34 @@ dic5=c(
 "Government and Military",
 "Agriculture and Farming")
 
+# Putting all columns to zeros and will be changing values to 1 if needed
+fintech$Finance=0
+fintech$Software=0
+fintech$Art=0
+fintech$Hardware=0
+fintech$State=0
 # for loop through all rows/companies
-for (val in fintech)
-{
-  statement
+for (row in 1:nrow(fintech))
+{ print(row)
+  # check at column "industry groups"
+  # sparse all words in entry
+  # check if each character is in list above
+  # val2 is each word in the list of words within "Industry.Groups"
+  for (val2 in unlist(str_split(fintech$Industry.Groups[row],',\\s')))
+  {
+    print(val2)
+    # putting one according to result
+    if (val2 %in% dic1 == TRUE) {fintech$Finance[row] = 1}
+    
+    if (val2 %in% dic2 == TRUE) {fintech$Software[row] = 1} 
+
+    if (val2 %in% dic3 == TRUE) {fintech$Art[row] = 1}
+    
+    if (val2 %in% dic4 == TRUE) {fintech$Hardware[row] = 1} 
+
+    if (val2 %in% dic5 == TRUE) {fintech$State[row] = 1}
+
+  }
 }
-# check at column "industry groups"
-fintech$Industry.Groups[1]
-# sparse all words in entry
-unlist(str_split(fintech$Industry.Groups[1],','))
-
-# check if each character is in list above
-# val2 is each word in the list of words within "Industry.Groups"
-for (val2 in unlist(str_split(fintech$Industry.Groups[1],',')))
-{
-  print(val2)
-  print(class(val2))
-  # putting one according to result
-  if (val2 %in% dic1 == TRUE) {fintech$Finance-sales-marketing-communication = 1} else {
-    fintech$Finance-sales-marketing-communication = 0
-  }
-  
-  if (val2 %in% dic2 == TRUE) {fintech$Software-videos-gaming-data_science = 1} else {
-    fintech$Software-videos-gaming-data_science = 0
-  }
-  
-  if (val2 %in% dic3 == TRUE) {fintech$Art-tourism-events-lifestyle-services = 1} else {
-    fintech$Art-tourism-events-lifestyle-services = 0
-  }
-  
-  if (val2 %in% dic4 == TRUE) {fintech$Hardware-manufacturing-clothes-food_beverages = 1} else {
-    fintech$Hardware-manufacturing-clothes-food_beverages = 0
-  }
-  
-  if (val2 %in% dic5 == TRUE) {fintech$State_departments-main_industries-national_state_sectors = 1} else {
-    fintech$State_departments-main_industries-national_state_sectors = 0
-  }
-  
-}
-
-  
-
 
 ## Create models --> see other document
