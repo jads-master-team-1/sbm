@@ -1,5 +1,3 @@
-# Modeling Crunchbase Rank
-
 ## Load data
 fintech <- read.csv("./data/fintech.csv",
                     header = TRUE,
@@ -196,5 +194,63 @@ for (row in 1:nrow(fintech))
   }
 }
 
-## Create models --> see other document
+
+
+# Modelling results
+
+library(MASS)      # for executing OLR
+library(brant)     # brant test for proportional odds assumption OLR
+
+
+
+### Create control variable model
+m <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds + 
+                 Finance + Software + Art + Hardware + State 
+            + Last.Funding.Type , data = fintech, Hess=TRUE)
+#
+
+#### Check summary
+summary(m)
+
+#### Check assumption proportionality in the proportional odds model for OLR
+brant::brant(m)
+
+
+
+### Create H1 model (number of investors)
+m1 <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds + 
+            Finance + Software + Art + Hardware + State +
+            Last.Funding.Type + Number.of.Investors, data = fintech, Hess=TRUE)
+
+#### Check summary
+summary(m1)
+
+#### Check assumption proportionality in the proportional odds model for OLR
+brant::brant(m1)
+
+
+
+### Create H2 model: total funding amount  (+ total equity funding amount?)
+m2 <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds + 
+            Finance + Software + Art + Hardware + State + 
+            Last.Funding.Type + Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
+
+#### Check summary
+summary(m2)
+
+#### Check assumption proportionality in the proportional odds model for OLR
+brant::brant(m2)
+
+
+
+### Create H3 model: last funding round type * total funding amount + total equity funding amount)
+m3 <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds + 
+            Finance + Software + Art + Hardware + State + 
+            Last.Funding.Type * Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
+
+#### Check summary
+summary(m3)
+
+#### Check assumption proportionality in the proportional odds model for OLR
+brant::brant(m3)
 
