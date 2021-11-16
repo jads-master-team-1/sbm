@@ -9,7 +9,7 @@ fintech <- read.csv("./data/fintech.csv",
 ## Select Columns
 numeric_columns <- c("Age",
                      "Number.of.Investors",
-                     "Number.of.Funding.Rounds",
+                     "Number.of.Funding.Rounds", #can be deleted
                      "Total.Funding.Amount.Currency..in.USD.")
 factor_columns <- c("Company.Type",
                     "Estimated.Revenue.Range",
@@ -62,11 +62,29 @@ fintech$Number.of.Employees <- relevel(as.factor(fintech$Number.of.Employees),
 ### Set list types
 fintech$Industry.Groups <- as.character(fintech$Industry.Groups)
 
-## Split industry groups
 
+## Creating bar charts for distributions
+### Estimated Revenue Range: barplot
+counts_rev <- table(fintech$Estimated.Revenue.Range)
+counts_rev
+
+
+counts_rev_sorted <- counts_rev[c(1,6,4,8,2,7,5,3)]
+
+counts_rev_sorted
+
+barplot(counts_rev_sorted,
+        main = "Estimated Revenue Range Distribution",
+        xlab = "Estimated Revenue Range",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+
+## Split industry groups
 ### Create industry group columns
 for (idx in 1:nrow(fintech)) {
   groups <- unlist(strsplit(fintech[idx, "Industry.Groups"], ", "))
+  
   
   for (group in groups) {
     fintech[idx, gsub(" ", ".", group)] <- 1
