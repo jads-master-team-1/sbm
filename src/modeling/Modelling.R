@@ -28,6 +28,21 @@ fintech$Number.of.Employees[fintech$Number.of.Employees == "10-Jan"] <- "1-10"
 ### Set is number.of.employees Nov-50 to 11-50
 fintech$Number.of.Employees[fintech$Number.of.Employees == "Nov-50"] <- "11-50"
 
+# Revenue ranges: Less than $1M $100M to $500M          $10B+   $10M to $50M    $1B to $10B    $1M to $10M   $500M to $1B  $50M to $100M
+# converting revenue ranges
+fintech$Estimated.Revenue.Range[fintech$Estimated.Revenue.Range == "$10B+"] <- "$100M+"
+fintech$Estimated.Revenue.Range[fintech$Estimated.Revenue.Range == "$1B to $10B"] <- "$100M+"
+fintech$Estimated.Revenue.Range[fintech$Estimated.Revenue.Range == "$500M to $1B"] <- "$100M+"
+fintech$Estimated.Revenue.Range[fintech$Estimated.Revenue.Range == "$100M to $500M"] <- "$100M+"
+# convert to "$500m+"
+
+# Employee range: group the top three ranges
+# table(fintech$Number.of.Employees)
+fintech$Number.of.Employees[fintech$Number.of.Employees == "10001+"] <- "1000+"
+fintech$Number.of.Employees[fintech$Number.of.Employees == "5001-10000"] <- "1000+"
+fintech$Number.of.Employees[fintech$Number.of.Employees == "1001-5000"] <- "1000+"
+
+
 ### Delete companies older than 21 years
 fintech <- fintech[fintech$Age <21, ]
 summary(fintech)
@@ -39,6 +54,25 @@ summary(fintech)
 ### Remove NA rows
 fintech <- na.omit(fintech)
 summary(fintech)
+
+# testing for outliers
+library(outliers)
+boxplot(fintech$Total.Funding.Amount.Currency..in.USD.)
+grubbs.test(fintech$Total.Funding.Amount.Currency..in.USD.)
+
+# removing outliers
+for (i in 1:350) {
+fintech <- fintech[fintech$Total.Funding.Amount.Currency..in.USD. < max(fintech$Total.Funding.Amount.Currency..in.USD.) , ]
+}
+
+# checking outliers again: all good now
+boxplot(fintech$Total.Funding.Amount.Currency..in.USD.)
+grubbs.test(fintech$Total.Funding.Amount.Currency..in.USD.)
+
+# rescaling to prevent modelling problems
+fintech$Total.Funding.Amount.Currency..in.USD.<- scales::rescale(fintech$Total.Funding.Amount.Currency..in.USD., to=c(0,10))
+
+
 
 
 ## Set Types
@@ -82,9 +116,9 @@ summary(fintech)
 # grouping industry groups
 library(stringr)
 str_split(fintech$Industry.Groups,',')
-unlist(str_split(fintech$Industry.Groups,','))
-unique(unlist(str_split(fintech$Industry.Groups,',')))
-unique(unlist(str_split(fintech$Industry.Groups,',\\s')))
+# unlist(str_split(fintech$Industry.Groups,','))
+# unique(unlist(str_split(fintech$Industry.Groups,',')))
+# unique(unlist(str_split(fintech$Industry.Groups,',\\s')))
 
 # creation of new columns
 # Finance-sales-marketing-communication
@@ -194,7 +228,18 @@ for (row in 1:nrow(fintech))
   }
 }
 
+# testing some correlations
+cor(fintech$Total.Funding.Amount.Currency..in.USD., fintech$Number.of.Investors)
+cor(fintech$Age, fintech$Total.Funding.Amount.Currency..in.USD.)
+cor(fintech$Number.of.Investors, fintech$Age)
 
+cor.test(fintech$Total.Funding.Amount.Currency..in.USD.,fintech$State)
+# Here the p value is small, enough to reject the hypothesis of independence
+
+chisq.test(fintech$Estimated.Revenue.Range, fintech$Number.of.Employees)
+chisq.test(fintech$Number.of.Employees, fintech$Last.Funding.Type)
+chisq.test(fintech$Estimated.Revenue.Range, fintech$Last.Funding.Type)
+# These chisq are all correlated
 
 # Modelling results
 
@@ -204,10 +249,9 @@ library(brant)     # brant test for proportional odds assumption OLR
 
 
 ### Create control variable model
-m <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds + 
-                 Finance + Software + Art + Hardware + State 
+m <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds  + 
+                  Software + Art + Hardware + State 
             + Last.Funding.Type , data = fintech, Hess=TRUE)
-#
 
 #### Check summary
 summary(m)
@@ -216,11 +260,11 @@ summary(m)
 brant::brant(m)
 
 
-
 ### Create H1 model (number of investors)
 m1 <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds + 
-            Finance + Software + Art + Hardware + State +
-            Last.Funding.Type + Number.of.Investors, data = fintech, Hess=TRUE)
+            Software + Art + Hardware + State +
+             Number.of.Investors, data = fintech, Hess=TRUE)
+# remove the following control variable: Last.Funding.Type +
 
 #### Check summary
 summary(m1)
@@ -228,12 +272,21 @@ summary(m1)
 #### Check assumption proportionality in the proportional odds model for OLR
 brant::brant(m1)
 
+# test for multicolinearity VIF: the higher, the worse
+# In general, a VIF above 10 indicates high correlation and is cause for concern. 
+# Some authors suggest a more conservative level of 2.5 or above
+install.packages("regclass")
+library(regclass) 
+VIF(m2)
+
+
 
 
 ### Create H2 model: total funding amount  (+ total equity funding amount?)
 m2 <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds + 
-            Finance + Software + Art + Hardware + State + 
-            Last.Funding.Type + Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
+            Software + Art + Hardware + State + 
+             Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
+# remove the following control variable: Last.Funding.Type +
 
 #### Check summary
 summary(m2)
@@ -243,9 +296,9 @@ brant::brant(m2)
 
 
 
-### Create H3 model: last funding round type * total funding amount + total equity funding amount)
+### Create H3 model: total funding amount  * last funding round type 
 m3 <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds + 
-            Finance + Software + Art + Hardware + State + 
+            Software + Art + Hardware + State + 
             Last.Funding.Type * Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
 
 #### Check summary
@@ -253,4 +306,21 @@ summary(m3)
 
 #### Check assumption proportionality in the proportional odds model for OLR
 brant::brant(m3)
+
+
+
+
+# calculating correlations
+newdata <- fintech
+
+newdata <- fintech$Finance + fintech$Software + fintech$Art + fintech$Hardware + fintech$State
+
+numericonly<-newdata[ , purrr::map_lgl(newdata, is.numeric)] # select numeric values
+bootcamp2021::corrNetwork(
+  newdata[ , purrr::map_lgl(newdata, is.numeric)], 
+  remove_below_abs = .7)
+
+
+
+
 
