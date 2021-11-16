@@ -67,17 +67,84 @@ fintech$Industry.Groups <- as.character(fintech$Industry.Groups)
 ### Estimated Revenue Range: barplot
 counts_rev <- table(fintech$Estimated.Revenue.Range)
 counts_rev
-
-
 counts_rev_sorted <- counts_rev[c(1,6,4,8,2,7,5,3)]
-
 counts_rev_sorted
-
 barplot(counts_rev_sorted,
         main = "Estimated Revenue Range Distribution",
         xlab = "Estimated Revenue Range",
         ylab = "Frequency",
         col = "peachpuff")
+
+# Revenue ranges: Less than $1M $100M to $500M          $10B+   $10M to $50M    $1B to $10B    $1M to $10M   $500M to $1B  $50M to $100M
+# converting revenue ranges
+fintech$Estimated.Revenue.Range[fintech$Estimated.Revenue.Range == "$10B+"] <- "$100M+"
+fintech$Estimated.Revenue.Range[fintech$Estimated.Revenue.Range == "$1B to $10B"] <- "$100M+"
+fintech$Estimated.Revenue.Range[fintech$Estimated.Revenue.Range == "$500M to $1B"] <- "$100M+"
+fintech$Estimated.Revenue.Range[fintech$Estimated.Revenue.Range == "$100M to $500M"] <- "$100M+"
+# convert to "$500m+"
+
+
+counts_rev_sorted <- counts_rev[c(1,6,4,8,2)]
+counts_rev_sorted
+barplot(counts_rev_sorted,
+        main = "Estimated Revenue Range Distribution",
+        xlab = "Estimated Revenue Range",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+
+## Creating bar charts for distributions
+### Estimated Revenue Range: barplot
+counts_rev <- table(fintech$Number.of.Employees)
+counts_rev
+counts_rev_sorted <- counts_rev[c(1,5,9,4,6,8,3,7,2)]
+counts_rev_sorted
+barplot(counts_rev_sorted,
+        main = "Number of Employees Distribution",
+        xlab = "Number of Employees",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+# Employee range: group the top three ranges
+# table(fintech$Number.of.Employees)
+fintech$Number.of.Employees[fintech$Number.of.Employees == "10001+"] <- "1000+"
+fintech$Number.of.Employees[fintech$Number.of.Employees == "5001-10000"] <- "1000+"
+fintech$Number.of.Employees[fintech$Number.of.Employees == "1001-5000"] <- "1000+"
+
+## Creating bar charts for distributions
+### Estimated Revenue Range: barplot
+counts_rev <- table(fintech$Number.of.Employees)
+counts_rev
+counts_rev_sorted <- counts_rev[c(1,5,9,4,6,8,3)]
+counts_rev_sorted
+barplot(counts_rev_sorted,
+        main = "Number of Employees Distribution",
+        xlab = "Number of Employees",
+        ylab = "Frequency",
+        col = "peachpuff")
+
+
+# testing for outliers
+library(outliers)
+boxplot(fintech$Total.Funding.Amount.Currency..in.USD.)
+grubbs.test(fintech$Total.Funding.Amount.Currency..in.USD.)
+
+# removing outliers
+for (i in 1:350) {
+  fintech <- fintech[fintech$Total.Funding.Amount.Currency..in.USD. < max(fintech$Total.Funding.Amount.Currency..in.USD.) , ]
+}
+
+# checking outliers again: all good now
+boxplot(fintech$Total.Funding.Amount.Currency..in.USD.)
+grubbs.test(fintech$Total.Funding.Amount.Currency..in.USD.)
+
+# rescaling to prevent modelling problems
+fintech$Total.Funding.Amount.Currency..in.USD.<- scales::rescale(fintech$Total.Funding.Amount.Currency..in.USD., to=c(0,10))
+
+
+
+
+
 
 
 ## Split industry groups
