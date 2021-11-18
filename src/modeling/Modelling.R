@@ -60,18 +60,31 @@ library(outliers)
 boxplot(fintech$Total.Funding.Amount.Currency..in.USD.)
 grubbs.test(fintech$Total.Funding.Amount.Currency..in.USD.)
 
-# removing outliers
-for (i in 1:350) {
-fintech <- fintech[fintech$Total.Funding.Amount.Currency..in.USD. < max(fintech$Total.Funding.Amount.Currency..in.USD.) , ]
-}
+# before we remove outliers, it might be the case that we have a different distribution for our data
+# histogram
+hist(fintech$Total.Funding.Amount.Currency..in.USD., breaks = 10)
+qqnorm(fintech$Total.Funding.Amount.Currency..in.USD.)
+qqline(fintech$Total.Funding.Amount.Currency..in.USD.)
+# it looks like it's log normal, let's have a look
+hist(log(fintech$Total.Funding.Amount.Currency..in.USD.))
+qqnorm(log(fintech$Total.Funding.Amount.Currency..in.USD.))
+qqline(log(fintech$Total.Funding.Amount.Currency..in.USD.))
+shapiro.test(log(fintech$Total.Funding.Amount.Currency..in.USD.))
+# let's do a log transformation and use that in the models!
+fintech$Total.Funding.Amount.Currency..in.USD. <- log(fintech$Total.Funding.Amount.Currency..in.USD.)
 
-# checking outliers again: all good now
-boxplot(fintech$Total.Funding.Amount.Currency..in.USD.)
-grubbs.test(fintech$Total.Funding.Amount.Currency..in.USD.)
 
-# rescaling to prevent modelling problems
-fintech$Total.Funding.Amount.Currency..in.USD.<- scales::rescale(fintech$Total.Funding.Amount.Currency..in.USD., to=c(0,10))
-
+# it might be the case that we have outliers, in that case use below code
+# # removing outliers
+# for (i in 1:350) {
+# fintech <- fintech[fintech$Total.Funding.Amount.Currency..in.USD. < max(fintech$Total.Funding.Amount.Currency..in.USD.) , ]
+# }
+# # checking outliers again: all good now
+# boxplot(fintech$Total.Funding.Amount.Currency..in.USD.)
+# grubbs.test(fintech$Total.Funding.Amount.Currency..in.USD.)
+# 
+# # rescaling to prevent modelling problems
+# fintech$Total.Funding.Amount.Currency..in.USD.<- scales::rescale(fintech$Total.Funding.Amount.Currency..in.USD., to=c(0,10))
 
 
 
@@ -228,6 +241,11 @@ for (row in 1:nrow(fintech))
   }
 }
 
+# These are the variables for the correlation/dependence table:
+# Age + Number.of.Employees + Number.of.Funding.Rounds  + 
+#   Software + Art + Hardware + State 
+# + Last.Funding.Type + Number.of.Investors + Total.Funding.Amount.Currency..in.USD.
+
 # testing some correlations
 cor(fintech$Total.Funding.Amount.Currency..in.USD., fintech$Number.of.Investors)
 cor(fintech$Age, fintech$Total.Funding.Amount.Currency..in.USD.)
@@ -247,18 +265,25 @@ library(MASS)      # for executing OLR
 library(brant)     # brant test for proportional odds assumption OLR
 
 
+# test for multicolinearity VIF: the higher, the worse
+# In general, a VIF above 10 indicates high correlation and is cause for concern. 
+# Some authors suggest a more conservative level of 2.5 or above
+library(regclass) 
+regclass::VIF(m2)
+
 
 ### Create control variable model
 m <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds  + 
                   Software + Art + Hardware + State 
-            + Last.Funding.Type , data = fintech, Hess=TRUE)
+                + Last.Funding.Type , data = fintech, Hess=TRUE)
 
 #### Check summary
 summary(m)
 
 #### Check assumption proportionality in the proportional odds model for OLR
 brant::brant(m)
-
+#### Multicolinearity
+regclass::VIF(m)
 
 ### Create H1 model (number of investors)
 m1 <- MASS::polr(Estimated.Revenue.Range ~ Age + Number.of.Employees + Number.of.Funding.Rounds + 
@@ -271,15 +296,8 @@ summary(m1)
 
 #### Check assumption proportionality in the proportional odds model for OLR
 brant::brant(m1)
-
-# test for multicolinearity VIF: the higher, the worse
-# In general, a VIF above 10 indicates high correlation and is cause for concern. 
-# Some authors suggest a more conservative level of 2.5 or above
-install.packages("regclass")
-library(regclass) 
-VIF(m2)
-
-
+#### Multicolinearity
+regclass::VIF(m1)
 
 
 ### Create H2 model: total funding amount  (+ total equity funding amount?)
@@ -293,7 +311,8 @@ summary(m2)
 
 #### Check assumption proportionality in the proportional odds model for OLR
 brant::brant(m2)
-
+#### Multicolinearity
+regclass::VIF(m2)
 
 
 ### Create H3 model: total funding amount  * last funding round type 
@@ -306,6 +325,11 @@ summary(m3)
 
 #### Check assumption proportionality in the proportional odds model for OLR
 brant::brant(m3)
+#### Multicolinearity
+regclass::VIF(m3)
+
+
+
 
 
 
