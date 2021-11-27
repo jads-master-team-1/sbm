@@ -323,7 +323,7 @@ library(regclass)
 ### Create control variable model
 m <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds  + 
                   Software + Art + Hardware + State 
-                + Last.Funding.Type , data = fintech, Hess=TRUE)
+                + Last.Funding.Type , data = fintech, Hess = TRUE, model = TRUE)
 #### Check summary
 summary(m)
 #### Check assumption proportionality in the proportional odds model for OLR
@@ -333,7 +333,12 @@ m_VIF <- lm(Revenue ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds  
               Software + Art + Hardware + State 
             + Last.Funding.Type , data = fintech)
 regclass::VIF(m_VIF)
-
+# interpretation
+m_ctable <- coef(summary(m))
+p <- pnorm(abs(m_ctable[, "t value"]), lower.tail = FALSE) * 2
+## combined table
+m_ctable <- cbind(m_ctable, "p value" = p)
+m_ctable
 
 ### Create H1 model (number of investors)
 m1 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds + 
@@ -348,7 +353,12 @@ m1_VIF <- lm(Revenue ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds 
                Software + Art + Hardware + State +
                + Last.Funding.Type + Number.of.Investors, data = fintech)
 regclass::VIF(m1_VIF)
-
+# interpretation
+m1_ctable <- coef(summary(m1))
+p1 <- pnorm(abs(m1_ctable[, "t value"]), lower.tail = FALSE) * 2
+## combined table
+m1_ctable <- cbind(m1_ctable, "p value" = p1)
+m1_ctable
 
 ### Create H2 model: total funding amount  (+ total equity funding amount?)
 m2 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds + 
@@ -363,33 +373,41 @@ m2_VIF <- lm(Revenue ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds 
                Software + Art + Hardware + State + 
                Last.Funding.Type + Total.Funding.Amount.Currency..in.USD., data = fintech)
 regclass::VIF(m2_VIF)
+# interpretation
+m2_ctable <- coef(summary(m2))
+p2 <- pnorm(abs(m2_ctable[, "t value"]), lower.tail = FALSE) * 2
+## combined table
+m2_ctable <- cbind(m2_ctable, "p value" = p2)
+m2_ctable
 
-#zeros <- matrix(0, nrow = 1, ncol = 24)
-### Create H3 model: total funding amount  * last funding round type 
-#m3_initial <- c(m2$coefficients, zeros, m2$zeta)
-m3 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds + 
-            Software + Art + Hardware + State + 
-            Last.Funding.Type + Total.Funding.Amount.Currency..in.USD.
-            + Last.Funding.Type:Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
-#### Check summary
-summary(m3)
-#### Check assumption proportionality in the proportional odds model for OLR
-brant::brant(m3, by.var = TRUE)
-#### Multicolinearity
-m3_VIF <- lm(Revenue ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds + 
-               Software + Art + Hardware + State + 
-               Last.Funding.Type * Total.Funding.Amount.Currency..in.USD., data = fintech)
-regclass::VIF(m3_VIF)
-
-
-# fintech$test <- fintech$Last.Funding.Type * fintech$Total.Funding.Amount.Currency..in.USD.
+# H3 model. WARNING: this model is bullshit!
+# #zeros <- matrix(0, nrow = 1, ncol = 24)
+# ### Create H3 model: total funding amount  * last funding round type
+# #m3_initial <- c(m2$coefficients, zeros, m2$zeta)
+# m3 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds +
+#             Software + Art + Hardware + State +
+#             Last.Funding.Type + Total.Funding.Amount.Currency..in.USD.
+#             + Last.Funding.Type:Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
+# #### Check summary
+# summary(m3)
+# #### Check assumption proportionality in the proportional odds model for OLR
+# brant::brant(m3, by.var = TRUE)
+# #### Multicolinearity
+# m3_VIF <- lm(Revenue ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds +
+#                Software + Art + Hardware + State +
+#                Last.Funding.Type * Total.Funding.Amount.Currency..in.USD., data = fintech)
+# regclass::VIF(m3_VIF)
 
 # To make tables
 library(texreg) # to make tables: texreg::screenreg(m1)
 library(stargazer) # to make tables with more models
 
-texreg::screenreg(l = list(m, m1, m2))
-
+(modeloverview <- texreg::screenreg(l = list(m, m1, m2)))
+# Now for latex code
+texreg::texreg(l = list(m, m1, m2))
+# Using longtable in overleaf for multiple pages
+texreg::texreg(l = list(m, m1, m2), longtable = TRUE)
+# just adjust the categories for number.of.employees!
 
 
 
