@@ -39,6 +39,25 @@ fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Secondary Market"] <- "P
 fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Secondary Market"] <- NA
 fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Non-equity Assistance"] <- NA
 fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Venture - Series Unknown"] <- NA
+# remove so we can order later
+fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Crowdfunding & ICO"] <- NA
+fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Private Equity"] <- NA
+# bin some stuff together
+fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Series E"] <- "Series E+"
+fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Series F"] <- "Series E+"
+fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Series G"] <- "Series E+"
+fintech$Last.Funding.Type[fintech$Last.Funding.Type == "Series H"] <- "Series E+"
+
+# Now make it into a order numeric variable
+fintech$LastFundingType <- matrix(0, nrow = nrow(fintech), ncol = 1)
+fintech$LastFundingType[fintech$Last.Funding.Type == "Pre-Seed & Angel"] <- 1
+fintech$LastFundingType[fintech$Last.Funding.Type == "Seed"] <- 2
+fintech$LastFundingType[fintech$Last.Funding.Type == "Series A"] <- 3
+fintech$LastFundingType[fintech$Last.Funding.Type == "Series B"] <- 4
+fintech$LastFundingType[fintech$Last.Funding.Type == "Series C"] <- 5
+fintech$LastFundingType[fintech$Last.Funding.Type == "Series D"] <- 6
+fintech$LastFundingType[fintech$Last.Funding.Type == "Series E+"] <- 7
+fintech$LastFundingType[fintech$Last.Funding.Type == "Post-IPO"] <- 8
 
 ### Set is number.of.employees 10-Jan to 1-10
 fintech$Number.of.Employees[fintech$Number.of.Employees == "10-Jan"] <- "1-10"
@@ -66,6 +85,19 @@ fintech$Revenue[fintech$Estimated.Revenue.Range == "$100M+"] <- 4
 fintech$Number.of.Employees[fintech$Number.of.Employees == "10001+"] <- "1000+"
 fintech$Number.of.Employees[fintech$Number.of.Employees == "5001-10000"] <- "1000+"
 fintech$Number.of.Employees[fintech$Number.of.Employees == "1001-5000"] <- "1000+"
+# Now turn into a numeric variable in order to use in model, take average:
+fintech$Employees <- as.numeric(matrix(0, nrow = nrow(fintech), ncol = 1))
+fintech$Employees[fintech$Number.of.Employees == "1-10"] <- 5
+fintech$Employees[fintech$Number.of.Employees == "11-50"] <- 30
+fintech$Employees[fintech$Number.of.Employees == "51-100"] <- 75
+fintech$Employees[fintech$Number.of.Employees == "101-250"] <- 175
+fintech$Employees[fintech$Number.of.Employees == "251-500"] <- 375
+fintech$Employees[fintech$Number.of.Employees == "501-1000"] <- 750
+fintech$Employees[fintech$Number.of.Employees == "1000+"] <- 1500
+
+
+
+
 
 
 ### Delete companies older than 21 years
@@ -125,8 +157,9 @@ fintech$Company.Type <- relevel(as.factor(fintech$Company.Type),
 # fintech$Estimated.Revenue.Range <- relevel(as.factor(fintech$Estimated.Revenue.Range),
 #                                            ref = "Less than $1M")
 fintech$Estimated.Revenue.Range <- factor(fintech$Estimated.Revenue.Range, levels = c("Less than $1M", "$1M to $10M", "$10M to $50M", "$50M to $100M", "$100M+"), ordered = TRUE) 
-fintech$Last.Funding.Type <- relevel(as.factor(fintech$Last.Funding.Type),
-                                     ref = "Pre-Seed & Angel")
+# fintech$Last.Funding.Type <- relevel(as.factor(fintech$Last.Funding.Type),
+#                                      ref = "Pre-Seed & Angel")
+fintech$Last.Funding.Type <- factor(fintech$Last.Funding.Type, levels = c("Pre-Seed & Angel", "Seed", "Series A", "Series B", "Series C", "Series D", "Series E+", "Post-IPO"), ordered = TRUE)
 # fintech$Number.of.Employees <- relevel(as.factor(fintech$Number.of.Employees),
 #                                        ref = "1-10")
 fintech$Number.of.Employees <- factor(fintech$Number.of.Employees, levels = c("1-10", "11-50", "51-100", "101-250", "251-500", "501-1000", "1000+"), ordered = TRUE)
@@ -135,16 +168,16 @@ fintech$Number.of.Employees <- factor(fintech$Number.of.Employees, levels = c("1
 ### Set list types
 fintech$Industry.Groups <- as.character(fintech$Industry.Groups)
 
-## Split industry groups
-
-### Create industry group columns
-for (idx in 1:nrow(fintech)) {
-  groups <- unlist(strsplit(fintech[idx, "Industry.Groups"], ", "))
-  
-  for (group in groups) {
-    fintech[idx, gsub(" ", ".", group)] <- 1
-  }
-}
+# ## Split industry groups
+# 
+# ### Create industry group columns
+# for (idx in 1:nrow(fintech)) {
+#   groups <- unlist(strsplit(fintech[idx, "Industry.Groups"], ", "))
+#   
+#   for (group in groups) {
+#     fintech[idx, gsub(" ", ".", group)] <- 1
+#   }
+# }
 
 ### Set empty columns to 0
 fintech[, 17:ncol(fintech)][is.na(fintech[, 17:ncol(fintech)])] <- 0
@@ -156,7 +189,7 @@ summary(fintech)
 ### fintech <- subset(fintech, select = -c(Industry.Groups, Financial.Services))
 # grouping industry groups
 library(stringr)
-str_split(fintech$Industry.Groups,',')
+# str_split(fintech$Industry.Groups,',')
 # unlist(str_split(fintech$Industry.Groups,','))
 # unique(unlist(str_split(fintech$Industry.Groups,',')))
 # unique(unlist(str_split(fintech$Industry.Groups,',\\s')))
@@ -321,18 +354,20 @@ library(regclass)
 
 
 ### Create control variable model
-m <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds  + 
+m <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Employees + Number.of.Funding.Rounds  + 
                   Software + Art + Hardware + State 
-                + Last.Funding.Type , data = fintech, Hess = TRUE, model = TRUE)
+                + LastFundingType , data = fintech, Hess = TRUE, model = TRUE)
 #### Check summary
 summary(m)
 #### Check assumption proportionality in the proportional odds model for OLR
-brant::brant(m, by.var = TRUE)
+brant::brant(m, by.var = TRUE) # (change LastFundingType to Last.Funding.Type to make it work)
 #### Multicolinearity
-m_VIF <- lm(Revenue ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds  + 
+m_VIF <- lm(Revenue ~ 1 + Age + Employees + Number.of.Funding.Rounds  + 
               Software + Art + Hardware + State 
-            + Last.Funding.Type , data = fintech)
-regclass::VIF(m_VIF)
+            + LastFundingType , data = fintech)
+test <- regclass::VIF(m_VIF)
+stack(test)
+setNames(stack(test)[2:1], c('Variable','VIF Score'))
 # interpretation
 m_ctable <- coef(summary(m))
 p <- pnorm(abs(m_ctable[, "t value"]), lower.tail = FALSE) * 2
@@ -341,18 +376,20 @@ m_ctable <- cbind(m_ctable, "p value" = p)
 m_ctable
 
 ### Create H1 model (number of investors)
-m1 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds + 
+m1 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Employees + Number.of.Funding.Rounds + 
             Software + Art + Hardware + State +
-             + Last.Funding.Type + Number.of.Investors, data = fintech, Hess=TRUE)
+             + LastFundingType + Number.of.Investors, data = fintech, Hess=TRUE)
 #### Check summary
 summary(m1)
 #### Check assumption proportionality in the proportional odds model for OLR
 brant::brant(m1, by.var = TRUE)
 #### Multicolinearity
-m1_VIF <- lm(Revenue ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds + 
+m1_VIF <- lm(Revenue ~ 1 + Age + Employees + Number.of.Funding.Rounds + 
                Software + Art + Hardware + State +
-               + Last.Funding.Type + Number.of.Investors, data = fintech)
+               + LastFundingType + Number.of.Investors, data = fintech)
 regclass::VIF(m1_VIF)
+stack(test)
+setNames(stack(test)[2:1], c('Variable','VIF Score'))
 # interpretation
 m1_ctable <- coef(summary(m1))
 p1 <- pnorm(abs(m1_ctable[, "t value"]), lower.tail = FALSE) * 2
@@ -361,18 +398,20 @@ m1_ctable <- cbind(m1_ctable, "p value" = p1)
 m1_ctable
 
 ### Create H2 model: total funding amount  (+ total equity funding amount?)
-m2 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds + 
+m2 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Employees + Number.of.Funding.Rounds + 
             Software + Art + Hardware + State + 
-              Last.Funding.Type + Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
+              LastFundingType + Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
 #### Check summary
 summary(m2)
 #### Check assumption proportionality in the proportional odds model for OLR
 brant::brant(m2, by.var = TRUE)
 #### Multicolinearity
-m2_VIF <- lm(Revenue ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds + 
+m2_VIF <- lm(Revenue ~ 1 + Age + Employees + Number.of.Funding.Rounds + 
                Software + Art + Hardware + State + 
-               Last.Funding.Type + Total.Funding.Amount.Currency..in.USD., data = fintech)
+               LastFundingType + Total.Funding.Amount.Currency..in.USD., data = fintech)
 regclass::VIF(m2_VIF)
+stack(test)
+setNames(stack(test)[2:1], c('Variable','VIF Score'))
 # interpretation
 m2_ctable <- coef(summary(m2))
 p2 <- pnorm(abs(m2_ctable[, "t value"]), lower.tail = FALSE) * 2
@@ -380,20 +419,20 @@ p2 <- pnorm(abs(m2_ctable[, "t value"]), lower.tail = FALSE) * 2
 m2_ctable <- cbind(m2_ctable, "p value" = p2)
 m2_ctable
 
-# H3 model. WARNING: this model is bullshit!
-# #zeros <- matrix(0, nrow = 1, ncol = 24)
+
+
 # ### Create H3 model: total funding amount  * last funding round type
 # #m3_initial <- c(m2$coefficients, zeros, m2$zeta)
-# m3 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds +
+# m3 <- MASS::polr(Estimated.Revenue.Range ~ 1 + Age + Employees + Number.of.Funding.Rounds +
 #             Software + Art + Hardware + State +
-#             Last.Funding.Type + Total.Funding.Amount.Currency..in.USD.
-#             + Last.Funding.Type:Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
+#             LastFundingType + Total.Funding.Amount.Currency..in.USD.
+#             + LastFundingType:Total.Funding.Amount.Currency..in.USD., data = fintech, Hess=TRUE)
 # #### Check summary
 # summary(m3)
 # #### Check assumption proportionality in the proportional odds model for OLR
 # brant::brant(m3, by.var = TRUE)
 # #### Multicolinearity
-# m3_VIF <- lm(Revenue ~ 1 + Age + Number.of.Employees + Number.of.Funding.Rounds +
+# m3_VIF <- lm(Revenue ~ 1 + Age + Employees + Number.of.Funding.Rounds +
 #                Software + Art + Hardware + State +
 #                Last.Funding.Type * Total.Funding.Amount.Currency..in.USD., data = fintech)
 # regclass::VIF(m3_VIF)
@@ -408,7 +447,6 @@ texreg::texreg(l = list(m, m1, m2))
 # Using longtable in overleaf for multiple pages
 texreg::texreg(l = list(m, m1, m2), longtable = TRUE)
 # just adjust the categories for number.of.employees!
-
 
 
 
